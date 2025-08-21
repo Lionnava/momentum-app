@@ -1,0 +1,12 @@
+/* src/app/globals.css */
+
+/*
+  Esta es la única línea que necesitamos según la documentación de v4.
+  Reemplaza las tres directivas @tailwind.
+*/
+@import "tailwindcss";
+
+/*
+  Aquí podemos añadir nuestras personalizaciones con la nueva sintaxis @theme
+  o @layer si es necesario, pero empecemos con esto para asegurar que la base funciona.
+*/
