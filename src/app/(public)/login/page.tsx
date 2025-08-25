@@ -7,7 +7,6 @@ import { useFormStatus } from 'react-dom';      // useFormStatus se importa desd
 
 import { signIn } from './actions';
 import type { FormState } from './actions';
-import Link from 'next/link';
 
 function SubmitButton() {
   const { pending } = useFormStatus();

@@ -1,40 +1,20 @@
-// src/app/(app)/update-password/actions.ts
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createServerClient } from '@/utils/supabase/server' // CORRECCIÓN
 import { redirect } from 'next/navigation'
+import type { UpdatePasswordState } from './page' // Asumiendo que el tipo está en la página
 
-export type UpdatePasswordState = {
-  message: string;
-  success: boolean;
-}
+export async function updatePassword(prevState: UpdatePasswordState, formData: FormData): Promise<UpdatePasswordState> {
+    const supabase = createServerClient();
 
-export async function updatePasswordAction(
-  prevState: UpdatePasswordState,
-  formData: FormData
-): Promise<UpdatePasswordState> {
-  const password = formData.get('password') as string;
-  const supabase = createClient();
+    const password = formData.get('password') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
 
-  // Primero, verificamos que el usuario tenga una sesión activa
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    // Esto no debería ocurrir gracias al layout, pero es una buena práctica de seguridad
-    return redirect('/login?message=Error: Sesión no válida');
-  }
+    if (password !== confirmPassword) return { message: 'Las contraseñas no coinciden.', success: false };
+    if (password.length < 6) return { message: 'La contraseña debe tener al menos 6 caracteres.', success: false };
 
-  // Actualizamos la contraseña del usuario
-  const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { message: `Error: ${error.message}`, success: false };
 
-  if (error) {
-    return {
-      message: `Error: ${error.message}`,
-      success: false,
-    };
-  }
-
-  return {
-    message: '¡Tu contraseña ha sido actualizada con éxito!',
-    success: true,
-  };
+    redirect('/dashboard');
 }

@@ -8,7 +8,9 @@ export type FormState = {
   success: boolean;
 };
 
+// --- INICIO DE LA CORRECCIÓN: AÑADIR TIPOS ---
 export async function createProposal(prevState: FormState, formData: FormData): Promise<FormState> {
+// --- FIN DE LA CORRECCIÓN ---
   const supabase = createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { message: 'No autorizado.', success: false };
@@ -34,5 +36,6 @@ export async function createProposal(prevState: FormState, formData: FormData): 
   }
   
   revalidatePath('/tasks');
-  return { message: '¡Propuesta enviada con éxito!', success: true };
+  // Redirigir a /tasks para ver la propuesta pendiente si eres manager
+  redirect('/tasks');
 }

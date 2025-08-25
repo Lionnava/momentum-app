@@ -2,21 +2,25 @@
 
 import { useOptimistic, useRef, useTransition } from 'react';
 import { LuCheck, LuCircle, LuPlus, LuTrash2 } from 'react-icons/lu';
-// --- INICIO DE LA CORRECCIÓN DE IMPORTACIONES ---
-import { addMilestone, toggleMilestone, deleteMilestone, updateTaskProgress } from '@/app/(app)/tasks/actions';
+// --- CORRECCIÓN DE IMPORTACIONES ---
+import { 
+    addMilestone, 
+    toggleMilestone, 
+    deleteMilestone, 
+    updateTaskProgress 
+} from '@/app/(app)/tasks/actions';
 // --- FIN DE LA CORRECCIÓN ---
-import { useRouter } from 'next/navigation';
+import type { Tables } from '@/lib/types';
 
-type Milestone = { id: string; description: string; is_completed: boolean; task_id: string; created_at: string };
-type Task = { id: string; progress_percent: number; milestones: Milestone[] };
+type Milestone = Tables<'milestones'>;
+type Task = Tables<'tasks'> & { milestones: Milestone[] };
 
 export function ManageTask({ task }: { task: Task }) {
-  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [optimisticMilestones, setOptimisticMilestones] = useOptimistic(
     task.milestones,
-    (state, newMilestones: Milestone[]) => newMilestones
+    (state, updatedMilestones: Milestone[]) => updatedMilestones
   );
 
   const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +58,7 @@ export function ManageTask({ task }: { task: Task }) {
           name="progress_percent"
           min="0"
           max="100"
-          defaultValue={task.progress_percent}
+          defaultValue={task.progress_percent ?? 0}
           onChange={handleProgressChange}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
         />
@@ -63,25 +67,19 @@ export function ManageTask({ task }: { task: Task }) {
       <div className="space-y-4">
         <h3 className="font-semibold">Hitos</h3>
         {optimisticMilestones.map(milestone => (
-          <div key={milestone.id} className="flex items-center gap-3">
+          <div key={milestone.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-md">
             <button onClick={() => handleToggleMilestone(milestone)}>
-              {milestone.is_completed ? <LuCheck className="text-green-500" /> : <LuCircle className="text-gray-400" />}
+              {milestone.is_completed ? <LuCheck className="text-green-500 h-5 w-5" /> : <LuCircle className="text-gray-400 h-5 w-5" />}
             </button>
-            <p className={`flex-1 ${milestone.is_completed ? 'line-through text-gray-500' : ''}`}>
+            <p className={`flex-1 text-sm ${milestone.is_completed ? 'line-through text-gray-500' : ''}`}>
               {milestone.description}
             </p>
             <button onClick={() => handleDeleteMilestone(milestone.id)} className="text-gray-400 hover:text-red-500">
-              <LuTrash2 />
+              <LuTrash2 className="h-4 w-4"/>
             </button>
           </div>
         ))}
       </div>
-      
-      <form ref={formRef} action={async (formData) => {
-          // Lógica para añadir hito (si la necesitas aquí)
-      }}>
-          {/* ... formulario para añadir un nuevo hito ... */}
-      </form>
     </div>
   );
 }

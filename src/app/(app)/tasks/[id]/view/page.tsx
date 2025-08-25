@@ -1,7 +1,7 @@
 // src/app/(app)/tasks/[id]/view/page.tsx
-import { createClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 import { ManageTask } from './_components/ManageTask';
+
 
 export default async function ViewTaskPage({ params }: { params: { id: string } }) {
     const supabase = createClient();
