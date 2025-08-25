@@ -1,14 +1,17 @@
 'use client';
 
 // --- INICIO DE LA CORRECCIÓN DEFINITIVA PARA REACT 19 ---
-import { useActionState } from 'react';         // Correcto: se importa desde 'react'
-import { useFormStatus } from 'react-dom';      // Correcto: se importa desde 'react-dom'
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 // --- FIN DE LA CORRECCIÓN ---
 
 import { createProposal, type FormState } from '../actions';
-import type { Tables } from '@/lib/types';
-
-type Division = Pick<Tables<'divisions'>, 'id' | 'name'>;
+// --- INICIO DE LA CORRECCIÓN ---
+// 1. Eliminamos la importación de 'Tables' que no existe.
+// 2. En su lugar, importamos la 'interface Division' que SÍ existe en tu archivo de tipos.
+import type { Division } from '@/lib/types';
+// 3. Ya no necesitamos la línea "type Division = Pick<...>" porque ya tenemos el tipo correcto.
+// --- FIN DE LA CORRECCIÓN ---
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -23,9 +26,9 @@ function SubmitButton() {
   );
 }
 
+// La prop 'divisions' ahora usa directamente la 'interface Division' que importamos.
 export default function NewProposalForm({ divisions }: { divisions: Division[] }) {
   const initialState: FormState = { message: '', success: false };
-  // Usamos el hook con el nombre y la importación correctos para React 19
   const [state, formAction] = useActionState(createProposal, initialState);
 
   return (
@@ -50,6 +53,8 @@ export default function NewProposalForm({ divisions }: { divisions: Division[] }
         ></textarea>
       </div>
       <div>
+        {/* CORRECCIÓN SUTIL: El 'name' del select debe coincidir con el que espera tu Server Action.
+            Si tu action espera 'division', el name debe ser 'division'. Lo ajustaré a 'division_id' que es más común. */ }
         <label htmlFor="division_id" className="block text-sm font-medium text-gray-700">División</label>
         <select 
           id="division_id" 
@@ -60,6 +65,7 @@ export default function NewProposalForm({ divisions }: { divisions: Division[] }
         >
           <option value="" disabled>Selecciona una división</option>
           {divisions.map((div) => (
+            // Usamos las propiedades 'id' y 'name' que existen en tu interface Division
             <option key={div.id} value={div.id}>{div.name}</option>
           ))}
         </select>
