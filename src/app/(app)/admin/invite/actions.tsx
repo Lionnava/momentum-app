@@ -18,12 +18,14 @@ export async function inviteUser(prevState: InviteUserState, formData: FormData)
   }
   
   // --- INICIO DE LA CORRECCIÓN CLAVE ---
-  // Obtenemos el origen (http://localhost:3000) dinámicamente
-  const origin = headers().get('origin');
+  // Primero, 'esperamos' a que la promesa de los headers se resuelva.
+  const headersList = await headers();
+  // Ahora que tenemos el objeto real, podemos usar .get()
+  const origin = headersList.get('origin');
+  // --- FIN DE LA CORRECCIÓN CLAVE ---
   
   // Creamos la URL de redirección explícita
   const redirectTo = `${origin}/auth/callback`;
-  // --- FIN DE LA CORRECCIÓN CLAVE ---
 
   const supabase = createServiceRoleClient();
 
