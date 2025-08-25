@@ -1,13 +1,13 @@
 // src/app/(app)/dashboard/page.tsx
 
 import StatCard from '@/components/dashboard/StatCard';
-import { createClient } from '@/utils/supabase/server';
+import { createServerClient } from '@/utils/supabase/server';
 import { LuLayoutDashboard, LuListTodo } from 'react-icons/lu';
 import RecentTasksList from '@/components/dashboard/RecentTasksList'; // <-- Importa la LISTA
 import { Task } from '@/lib/types'; // <-- Importa el tipo centralizado
 
 export default async function DashboardPage() {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const baseQuery = supabase.from('tasks');
 
   try {
