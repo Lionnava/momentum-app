@@ -1,5 +1,5 @@
 // ... (importaciones y componentes StatCard, etc. se mantienen)
-import RecentTaskItem from '@/components/dashboard/RecentTaskItem';
+import RecentTasksList from '@/components/dashboard/RecentTasksList';
 
 // Asegúrate de que el tipo RecentTask esté bien definido
 interface RecentTask {
@@ -13,7 +13,7 @@ interface RecentTask {
   milestones: { image_url: string | null }[];
 }
 
-// ... (componentes StatCard, RecentTaskItem, etc.)
+// ... (componentes StatCard, RecentTasksList, etc.)
 
 export default async function DashboardPage() {
     // ... (lógica de obtención de datos se mantiene)
