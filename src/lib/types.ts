@@ -20,22 +20,18 @@ export interface Division {
     }
 }
 
+// --- INTERFAZ CORREGIDA ---
+// Esta es la versión que coincide con tu consulta en el Dashboard.
 export interface Task {
-    id: string;
-    collectionId: string;
-    titulo: string;
-    notes?: string;
-    status: 'Pendiente' | 'En Progreso' | 'Completada';
-    progress_percent: number;
-    due_date: string;
-    assignee: string;
-    division: string;
-    depends_on: string;
-    expand?: {
-        assignee?: User;
-        division?: Division;
-        depends_on?: Task;
-    };
+  id: string;
+  name: string; // Se cambió 'titulo' por 'name'
+  status: string;
+  due_date: string | null;
+  progress_percent: number | null;
+  // Estos son los objetos que te devuelve Supabase con el '.select()'
+  divisions: { name: string | null } | null;
+  assignee: { full_name: string | null } | null;
+  milestones: { image_url: string | null }[];
 }
 
 export interface Proposal {
@@ -44,7 +40,6 @@ export interface Proposal {
     title: string;
     description: string;
     proposer: string;
-    // --- ESTADOS ACTUALIZADOS ---
     status: 'Pendiente' | 'Pendiente Manager' | 'Pendiente superManager' | 'Aprobada' | 'Rechazada';
     division: string;
     decision_notes?: string;
