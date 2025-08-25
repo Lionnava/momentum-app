@@ -1,5 +1,5 @@
 // ... (importaciones y componentes StatCard, etc. se mantienen)
-import RecentTasksList from '@/components/dashboard/RecentTasksList';
+import RecentTaskItem from '@/components/dashboard/RecentTaskItem';
 
 // Asegúrate de que el tipo RecentTask esté bien definido
 interface RecentTask {
@@ -13,7 +13,7 @@ interface RecentTask {
   milestones: { image_url: string | null }[];
 }
 
-// ... (componentes StatCard, RecentTasksList, etc.)
+// ... (componentes StatCard, RecentTaskItem, etc.)
 
 export default async function DashboardPage() {
     // ... (lógica de obtención de datos se mantiene)
@@ -34,7 +34,7 @@ export default async function DashboardPage() {
                             // --- INICIO DE LA CORRECCIÓN ---
                             // Añadimos el tipo explícito 'any' temporalmente para que el build pase,
                             // o mejor, casteamos al tipo correcto.
-                            recentTasks.map((task: RecentTask) => <RecentTasksList key={task.id} task={task} />)
+                            recentTasks.map((task: RecentTask) => <RecentTaskItem key={task.id} task={task} />)
                             // --- FIN DE LA CORRECCIÓN ---
                         ) : (<p className="text-center text-gray-500 py-4">No hay tareas recientes para mostrar.</p>)}
                     </div>
