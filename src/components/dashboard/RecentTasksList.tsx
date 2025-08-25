@@ -1,7 +1,6 @@
 // src/components/dashboard/RecentTasksList.tsx
 
 import type { Task } from "@/lib/types";
-import Link from 'next/link';
 
 // Pequeño componente para mostrar una "píldora" de estado con color
 function StatusBadge({ status }: { status: string }) {
