@@ -1,40 +1,46 @@
-// src/app/(app)/tasks/new/page.tsx
-import { NewTaskForm } from './_components/NewTaskForm';
-import { createClient } from '@/utils/supabase/server';
+import { createServerClient } from '@/utils/supabase/server';
+import { redirect } from 'next/navigation';
+import NewTaskForm from './_components/NewTaskForm';
+import type { Tables } from '@/lib/types';
+
+type Division = Pick<Tables<'divisions'>, 'id' | 'name'>;
+
+async function getDataForNewTaskPage(): Promise<{ divisions: Division[] }> {
+  const supabase = createServerClient();
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect('/login');
+  }
+
+  const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single();
+  
+  const userRole = profile?.rol.replace(/::text/g, '').toLowerCase();
+  
+  if (userRole !== 'manager' && userRole !== 'supermanager') {
+    redirect('/tasks?error=unauthorized_creation');
+  }
+  
+  const { data: divisions } = await supabase.from('divisions').select('id, name');
+  
+  return { divisions: divisions || [] };
+}
 
 export default async function NewTaskPage() {
-    const supabase = createClient();
+  const { divisions } = await getDataForNewTaskPage();
 
-    // Obtenemos los perfiles para el selector "Asignar a"
-    const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .order('full_name', { ascending: true });
-
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Obtenemos las divisiones para el nuevo selector
-    const { data: divisions, error: divisionsError } = await supabase
-        .from('divisions')
-        .select('id, name')
-        .order('name', { ascending: true });
-    // --- FIN DE LA MODIFICACIÓN ---
-
-    if (profilesError || divisionsError) {
-        console.error('Error fetching data for task form:', profilesError || divisionsError);
-        return <p className="p-8 text-red-500">No se pudieron cargar los datos necesarios para el formulario.</p>;
-    }
-
-    return (
-        <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800">Crear Nueva Tarea</h1>
-                <p className="mt-1 text-gray-600">Completa los detalles de la nueva tarea.</p>
-            </div>
-            
-            <div className="bg-white p-8 rounded-lg shadow-md border">
-                {/* Pasamos ambos listados al formulario */}
-                <NewTaskForm profiles={profiles ?? []} divisions={divisions ?? []} />
-            </div>
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Crear Nueva Tarea Directamente</h1>
+        <div className="text-sm text-amber-800 bg-amber-100 border-l-4 border-amber-500 p-4 rounded-md mb-6" role="alert">
+          <p className="font-bold">Atención</p>
+          <p>Estás creando una tarea directamente. Esta acción está reservada para roles de gestión.</p>
         </div>
-    );
+        <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+          <NewTaskForm divisions={divisions} />
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -1,57 +1,45 @@
 'use server';
 
-import { createServerClient } from '@supabase/ssr'; 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { createServiceRoleClient } from '@/utils/supabase/service';
+import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers'; // Importamos 'headers'
 
-/**
- * Server Action para invitar a un nuevo usuario.
- * Se ejecuta en el servidor y utiliza la clave de servicio de Supabase
- * para tener permisos de administrador.
- */
-export async function inviteUserAction(formData: FormData) {
+export type InviteUserState = {
+  message: string;
+  success: boolean;
+};
+
+export async function inviteUser(prevState: InviteUserState, formData: FormData): Promise<InviteUserState> {
   const email = formData.get('email') as string;
-  const role = formData.get('role') as string;
+  const rol = formData.get('rol') as string;
 
-  // Validaciones básicas
-  if (!email || !role) {
-    return redirect('/admin/invite?error=Email y rol son requeridos.');
+  if (!email || !rol) {
+    return { message: 'El correo y el rol son obligatorios.', success: false };
   }
+  
+  // --- INICIO DE LA CORRECCIÓN CLAVE ---
+  // Obtenemos el origen (http://localhost:3000) dinámicamente
+  const origin = headers().get('origin');
+  
+  // Creamos la URL de redirección explícita
+  const redirectTo = `${origin}/auth/callback`;
+  // --- FIN DE LA CORRECCIÓN CLAVE ---
 
-  const cookieStore = cookies();
+  const supabase = createServiceRoleClient();
 
-  // Creamos un cliente de Supabase con permisos de administrador
-  // utilizando la clave de servicio (SUPABASE_SERVICE_ROLE_KEY).
-  // ¡Esta clave debe estar en tu archivo .env.local!
-  const supabaseAdmin = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value; },
-        set(name: string, value: string, options) {
-          try { cookieStore.set({ name, value, ...options }); } catch (error) {}
-        },
-        remove(name: string, options) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
-        },
-      }
-    }
-  );
-
-  // Usamos la función de admin para enviar la invitación por correo.
-  // Pasamos el rol en los metadatos para que el trigger de la base de datos lo recoja.
-  const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-    data: { role: role }
+  const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
+    data: {
+      initial_rol: rol,
+    },
+    // Le decimos a Supabase a dónde redirigir al usuario DESPUÉS de que el token sea validado
+    redirectTo: redirectTo, 
   });
 
   if (error) {
     console.error('Error al invitar usuario:', error);
-    // Redirigir de vuelta a la página con un mensaje de error
-    return redirect(`/admin/invite?error=${encodeURIComponent(error.message)}`);
+    return { message: `Error: ${error.message}`, success: false };
   }
 
-  console.log('Usuario invitado exitosamente:', data);
-  // Redirigir de vuelta a la página con un mensaje de éxito
-  return redirect('/admin/invite?success=Invitación enviada correctamente.');
+  revalidatePath('/admin/invite');
+  return { message: `Invitación enviada exitosamente a ${email}.`, success: true };
 }

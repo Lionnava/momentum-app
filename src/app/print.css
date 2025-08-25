@@ -1,0 +1,40 @@
+@media print {
+  /* Oculta todo por defecto al imprimir */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Muestra solo el área de impresión y sus hijos */
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+  
+  /* Posiciona el área de impresión en la parte superior de la página */
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none !important; /* Quitamos bordes y sombras al imprimir */
+    box-shadow: none !important;
+  }
+
+  /* Oculta elementos que no queremos en el reporte, como el botón de imprimir */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* --- NUEVOS ESTILOS PARA EL MEMBRETE --- */
+  /* Por defecto, el membrete está oculto */
+  .print-header {
+    display: none;
+  }
+  /* Cuando se imprime, hacemos visible el membrete como un bloque */
+  @page {
+    size: auto;
+    margin: 20mm;
+  }
+  .print\:block {
+    display: block !important;
+  }
+}

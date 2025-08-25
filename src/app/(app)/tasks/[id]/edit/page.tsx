@@ -1,43 +1,57 @@
-// src/app/(app)/tasks/[id]/edit/page.tsx
-import { createClient } from '@/utils/supabase/server';
+import { createServerClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
-import { EditTaskForm } from './_components/EditTaskForm';
+import EditTaskForm from './_components/EditTaskForm';
+// Importaremos el nuevo componente que vamos a crear
+import MilestoneManager from './_components/MilestoneManager';
+import type { Tables } from '@/lib/types';
 
-// Definimos el tipo explícito para los props, solucionando el error de TypeScript
-type EditPageProps = {
-  params: { id: string };
+// Extendemos el tipo Task para incluir sus hitos
+type TaskWithMilestones = Tables<'tasks'> & {
+  milestones: Tables<'milestones'>[];
 };
 
-export default async function EditTaskPage({ params }: EditPageProps) {
-    const supabase = createClient();
+async function getTaskAndMilestones(id: string): Promise<TaskWithMilestones | null> {
+  const supabase = createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  // Hacemos una sola consulta para obtener la tarea y todos sus hitos
+  const { data: task } = await supabase
+    .from('tasks')
+    .select(`
+      *,
+      milestones ( * )
+    `)
+    .eq('id', id)
+    // .eq('assignee_id', user.id) // Opcional: restringir acceso si es necesario
+    .single();
     
-    const { data: task, error: taskError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('id', params.id)
-        .single();
+  return task;
+}
 
-    if (taskError || !task) {
-        return notFound();
-    }
+export default async function EditTaskPage({ params }: { params: { id: string } }) {
+  const taskData = await getTaskAndMilestones(params.id);
 
-    const { data: profiles } = await supabase.from('profiles').select('id, full_name');
-    const { data: divisions } = await supabase.from('divisions').select('id, name');
+  if (!taskData) {
+    notFound();
+  }
 
-    return (
-        <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800">Editar Tarea</h1>
-                <p className="mt-1 text-gray-600">Actualiza los detalles de la tarea.</p>
-            </div>
-            
-            <div className="bg-white p-8 rounded-lg shadow-md border">
-                <EditTaskForm 
-                    task={task as any}
-                    profiles={profiles ?? []} 
-                    divisions={divisions ?? []} 
-                />
-            </div>
+  return (
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Editar Tarea</h1>
+        <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+          <EditTaskForm task={taskData} />
         </div>
-    );
+      </div>
+      
+      {/* Añadimos el nuevo componente para manejar los hitos */}
+      <div className="max-w-3xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Hitos de la Tarea</h2>
+        <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+          <MilestoneManager taskId={taskData.id} initialMilestones={taskData.milestones} />
+        </div>
+      </div>
+    </div>
+  );
 }

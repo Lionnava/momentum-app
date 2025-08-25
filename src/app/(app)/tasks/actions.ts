@@ -1,133 +1,50 @@
-// src/app/(app)/tasks/actions.ts
-'use server'
+'use server';
 
-import { createClient } from '@/utils/supabase/server';
+import { createServerClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-// --- ACCIONES DE CREACIÓN DE TAREAS ---
-export type CreateTaskState = { message: string; };
+export async function deleteTask(taskId: string) { /* ... */ }
+export async function updateTask(taskId: string, formData: FormData) { /* ... */ }
+export type MilestoneFormState = { message: string; success: boolean; };
+export async function addMilestone(prevState: MilestoneFormState, formData: FormData): Promise<MilestoneFormState> { /* ... */ }
 
-export async function createTaskAction(prevState: CreateTaskState, formData: FormData): Promise<CreateTaskState> {
-    const supabase = createClient();
-    const title = formData.get('title') as string;
-    const assigneeId = formData.get('assignee_id') as string;
-    const dueDate = formData.get('due_date') as string;
-    const status = formData.get('status') as string;
-    const divisionId = formData.get('division_id') as string;
-    const requiresApproval = formData.get('requires_approval') === 'on';
+// --- FUNCIÓN 'assignTask' Y SU TIPO DE ESTADO ---
+export type AssignTaskState = {
+  success?: string;
+  error?: string;
+} | null;
 
-    if (!title || !assigneeId || !dueDate || !status || !divisionId) {
-        return { message: 'Error: Todos los campos son obligatorios.' };
-    }
+export async function assignTask(prevState: AssignTaskState, formData: FormData): Promise<AssignTaskState> {
+  const supabase = createServerClient();
 
-    const { error } = await supabase.from('tasks').insert({
-        title,
-        assignee_id: assigneeId,
-        due_date: dueDate,
-        status,
-        division_id: divisionId,
-        requires_approval: requiresApproval,
-    });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'No autorizado.' };
 
-    if (error) {
-        console.error('Error creating task:', error);
-        return { message: `Error de base de datos: ${error.message}` };
-    }
+  const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single();
+  const userRole = profile?.rol.replace(/::text/g, '').toLowerCase();
 
-    revalidatePath('/tasks');
-    revalidatePath('/dashboard');
-    redirect('/tasks');
-}
+  if (userRole !== 'manager' && userRole !== 'supermanager') {
+    return { error: 'No tienes permisos para asignar tareas.' };
+  }
+  
+  const taskId = formData.get('taskId') as string;
+  const assigneeId = formData.get('assigneeId') as string;
 
-// --- ACCIONES DE FLUJO DE TRABAJO Y APROBACIÓN ---
+  if (!taskId || !assigneeId) {
+    return { error: 'Faltan datos para asignar la tarea.' };
+  }
 
-export async function completeTaskAction(taskId: string, requiresApproval: boolean) {
-    const supabase = createClient();
-    const newStatus = requiresApproval ? 'En Revisión' : 'Completada';
-    await supabase.from('tasks').update({ status: newStatus, progress_percent: 100 }).eq('id', taskId);
-    revalidatePath('/tasks');
-    revalidatePath('/dashboard');
-}
+  const { error } = await supabase
+    .from('tasks')
+    .update({ assignee_id: assigneeId, status: 'Pendiente' })
+    .eq('id', taskId);
 
-export async function approveTaskAction(taskId: string) {
-    const supabase = createClient();
-    await supabase.from('tasks').update({ status: 'Completada' }).eq('id', taskId);
-    revalidatePath('/tasks');
-    revalidatePath('/dashboard');
-}
+  if (error) {
+    console.error('Error al asignar tarea:', error);
+    return { error: 'No se pudo asignar la tarea.' };
+  }
 
-export async function rejectTaskAction(taskId: string) {
-    const supabase = createClient();
-    await supabase.from('tasks').update({ status: 'En Progreso' }).eq('id', taskId);
-    revalidatePath('/tasks');
-    revalidatePath('/dashboard');
-}
-
-// --- ACCIONES CRUD (Update y Delete) ---
-
-export type UpdateTaskState = { message: string; };
-
-export async function updateTaskAction(taskId: string, prevState: UpdateTaskState, formData: FormData): Promise<UpdateTaskState> {
-    const supabase = createClient();
-    const title = formData.get('title') as string;
-    const assigneeId = formData.get('assignee_id') as string;
-    const dueDate = formData.get('due_date') as string;
-    const status = formData.get('status') as string;
-    const divisionId = formData.get('division_id') as string;
-
-    const { error } = await supabase.from('tasks').update({ 
-        title, 
-        assignee_id: assigneeId,
-        due_date: dueDate,
-        status,
-        division_id: divisionId,
-    }).eq('id', taskId);
-
-    if (error) { return { message: 'Error al actualizar la tarea.' }; }
-    
-    revalidatePath('/tasks');
-    revalidatePath(`/tasks/${taskId}/view`);
-    redirect('/tasks');
-}
-
-export async function deleteTaskAction(taskId: string) {
-    const supabase = createClient();
-    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
-
-    if (error) {
-        console.error('Error deleting task:', error);
-        return redirect('/tasks?message=Error al eliminar la tarea');
-    }
-
-    revalidatePath('/tasks');
-    revalidatePath('/dashboard');
-    redirect('/tasks');
-}
-
-// --- ACCIONES DE HITOS ---
-
-export async function toggleMilestoneAction(milestoneId: string, newState: boolean) {
-    const supabase = createClient();
-    await supabase.from('milestones').update({ is_completed: newState }).eq('id', milestoneId);
-}
-
-export async function addMilestoneAction(taskId: string, formData: FormData) {
-    const supabase = createClient();
-    const description = formData.get('description') as string;
-    if (!description) return;
-    await supabase.from('milestones').insert({ task_id: taskId, description });
-}
-
-export async function deleteMilestoneAction(milestoneId: string) {
-    const supabase = createClient();
-    await supabase.from('milestones').delete().eq('id', milestoneId);
-}
-
-export async function updateTaskProgressAction(taskId: string, newProgress: number) {
-    const supabase = createClient();
-    await supabase.from('tasks').update({ progress_percent: newProgress }).eq('id', taskId);
-    revalidatePath(`/tasks/${taskId}/view`);
-    revalidatePath('/tasks');
-    revalidatePath('/dashboard');
+  revalidatePath('/tasks');
+  return { success: '¡Tarea asignada!' };
 }

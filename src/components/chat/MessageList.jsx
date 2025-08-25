@@ -1,51 +1,30 @@
 'use client';
+import { useRef, useEffect } from 'react';
 
-import { useEffect, useRef } from 'react';
+// ... (El componente Message no necesita cambios)
 
-export default function MessageList({ messages, currentUserId }) {
-  const endOfMessagesRef = useRef(null);
+// Asegúrate de que esta línea sea 'export default function MessageList...'
+export default function MessageList({ messages, loading, currentUserId }) {
+  const messagesEndRef = useRef(null);
 
-  // Efecto para hacer scroll automáticamente al final cuando llegan nuevos mensajes
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
-    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages]);
 
-  // Si no hay mensajes, muestra un placeholder
-  if (!messages || messages.length === 0) {
-    return (
-      <div className="flex-1 p-4 text-center text-gray-500">
-        Aún no hay mensajes. ¡Sé el primero en saludar!
-      </div>
-    );
+  if (loading) {
+    return <div className="flex-1 flex items-center justify-center text-gray-400">Cargando mensajes...</div>;
   }
 
   return (
-    <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-      {messages.map((msg) => {
-        const isCurrentUser = msg.user_id === currentUserId;
-        
-        return (
-          <div
-            key={msg.id}
-            // Alinea los mensajes del usuario actual a la derecha y los de otros a la izquierda
-            className={`flex mb-3 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              // Aplica diferentes colores de fondo
-              className={`max-w-xs px-4 py-2 rounded-lg lg:max-w-md ${
-                isCurrentUser ? 'bg-blue-500 text-white' : 'bg-white border'
-              }`}
-            >
-              <p className="text-sm">{msg.content}</p>
-              <span className={`text-xs mt-1 block ${isCurrentUser ? 'text-blue-100' : 'text-gray-400'}`}>
-                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-          </div>
-        );
-      })}
-      {/* Elemento invisible al final de la lista para hacer scroll */}
-      <div ref={endOfMessagesRef} />
+    <div className="flex-1 p-6 overflow-y-auto">
+      {messages.map((msg) => (
+        <Message key={msg.id} message={msg} isCurrentUser={msg.user_id === currentUserId} />
+      ))}
+      <div ref={messagesEndRef} />
     </div>
   );
 }

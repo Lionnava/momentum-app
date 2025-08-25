@@ -1,32 +1,62 @@
-'use server'
+'use server';
 
-import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+import { createServerClient } from '@/utils/supabase/server';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
+// Estado mejorado para la respuesta del formulario.
 export type FormState = {
   message: string;
-}
+  success: boolean;
+};
 
-export async function loginAction(prevState: FormState, formData: FormData): Promise<FormState> {
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const supabase = createClient()
+// Renombrada de loginAction a signIn para mayor claridad.
+export async function signIn(prevState: FormState, formData: FormData): Promise<FormState> {
+  const supabase = createServerClient();
+
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
+  if (!email || !password) {
+    return { message: 'El correo y la contraseña son obligatorios.', success: false };
+  }
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
-  })
+  });
 
   if (error) {
-    return {
-      message: 'Credenciales inválidas. Por favor, intente de nuevo.',
-    }
+    return { message: 'Credenciales inválidas. Por favor, intente de nuevo.', success: false };
   }
-  redirect('/dashboard')
+
+  revalidatePath('/', 'layout');
+  redirect('/dashboard');
 }
 
-export async function logoutAction() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    redirect('/login');
+// Función signUp añadida para el registro.
+export async function signUp(prevState: FormState, formData: FormData): Promise<FormState> {
+  const supabase = createServerClient();
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
+  if (!email || !password) {
+    return { message: 'El correo y la contraseña son obligatorios.', success: false };
+  }
+
+  const { error } = await supabase.auth.signUp({ email, password });
+
+  if (error) {
+    return { message: `Error al registrar: ${error.message}`, success: false };
+  }
+
+  return { message: '¡Registro exitoso! Revisa tu correo para confirmar tu cuenta.', success: true };
+}
+
+
+// Renombrada de logoutAction a signOut para mayor claridad.
+export async function signOut() {
+  const supabase = createServerClient();
+  await supabase.auth.signOut();
+  redirect('/login');
 }

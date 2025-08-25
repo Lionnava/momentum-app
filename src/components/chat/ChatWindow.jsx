@@ -1,83 +1,73 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/utils/supabase/client';
-import MessageList from './MessageList';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/utils/supabase/client';
 import MessageInput from './MessageInput';
-// Asegúrate de importar el componente de invitación si lo tienes
-import InviteParticipant from './InviteParticipant';
+// --- INICIO DE LA CORRECCIÓN ---
+// Quitamos las llaves {} para usar la importación por defecto.
+import MessageList from './MessageList'; 
+// --- FIN DE LA CORRECCIÓN ---
 
-export default function ChatWindow({ roomId, currentUser }) {
+export default function ChatWindow({ selectedRoom }) {
+  const supabase = createClient();
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [roomName, setRoomName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // Cargar datos iniciales de la sala
   useEffect(() => {
-    const fetchRoomData = async () => {
-      setLoading(true);
-      // Obtener mensajes
-      const { data: messagesData } = await supabase
-        .from('messages')
-        .select('*, profiles(full_name)') // ¡Mejora! Obtenemos el nombre del autor
-        .eq('room_id', roomId)
-        .order('created_at', { ascending: true });
-      setMessages(messagesData || []);
-      
-      // Obtener nombre de la sala
-      const { data: roomData } = await supabase
-        .from('chat_rooms').select('name').eq('id', roomId).single();
-      setRoomName(roomData?.name || '');
-      
-      setLoading(false);
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
     };
-    if (roomId) fetchRoomData();
-  }, [roomId]);
+    getUser();
+  }, [supabase]);
 
-  // Suscribirse a nuevos mensajes en tiempo real
   useEffect(() => {
+    async function fetchMessages() {
+      if (!selectedRoom) return;
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*, author:profiles!messages_user_id_fkey(full_name)')
+        .eq('room_id', selectedRoom.id)
+        .order('created_at', { ascending: true });
+
+      if (error) console.error("Error al cargar mensajes:", error);
+      else setMessages(data);
+      setLoading(false);
+    }
+    fetchMessages();
+  }, [selectedRoom, supabase]);
+
+  useEffect(() => {
+    if (!selectedRoom) return;
     const channel = supabase
-      .channel(`room:${roomId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${roomId}` },
+      .channel(`room_${selectedRoom.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${selectedRoom.id}` },
         async (payload) => {
-          // Necesitamos obtener el perfil del autor del nuevo mensaje
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('id', payload.new.user_id)
+          const { data: newMessage, error } = await supabase
+            .from('messages')
+            .select('*, author:profiles!messages_user_id_fkey(full_name)')
+            .eq('id', payload.new.id)
             .single();
-          
-          const newMessage = {
-            ...payload.new,
-            profiles: profile
-          };
-          setMessages((currentMessages) => [...currentMessages, newMessage]);
+          if (!error && newMessage) {
+            setMessages((currentMessages) => [...currentMessages, newMessage]);
+          }
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [roomId]);
+  }, [selectedRoom, supabase]);
 
-  const handleSendMessage = async (content) => {
-    await supabase.from('messages').insert({
-      content: content,
-      room_id: roomId,
-      user_id: currentUser.id,
-    });
-  };
-  
-  if (loading) return <div className="flex items-center justify-center flex-1">Cargando sala...</div>;
+  if (!selectedRoom) {
+    return <div className="flex-1 flex items-center justify-center text-gray-500"><p>Selecciona un chat para comenzar a conversar</p></div>;
+  }
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div className="p-4 font-semibold text-gray-700 bg-gray-100 border-b">
-        <h2>{roomName || 'Chat'}</h2>
-      </div>
-      <MessageList messages={messages} currentUserId={currentUser?.id} />
-      <InviteParticipant roomId={roomId} />
-      <MessageInput onSendMessage={handleSendMessage} />
+    <div className="flex-1 flex flex-col bg-white">
+      <header className="p-4 border-b border-gray-200 bg-gray-50"><h2 className="font-semibold text-gray-800">{selectedRoom.name}</h2></header>
+      <MessageList messages={messages} loading={loading} currentUserId={currentUser?.id} />
+      <MessageInput roomId={selectedRoom.id} />
     </div>
   );
 }

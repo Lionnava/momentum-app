@@ -1,7 +1,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { logoutAction } from '@/app/(public)/login/actions';
+import { signOut } from '@/app/(public)/login/actions';
 import type { UserProfile } from '@/app/(app)/layout';
+
+// --- INICIO DE LA CORRECCIÓN ---
+function formatRole(role: string): string {
+  if (!role) return '';
+  // Primero, quitamos el '::text' si existe
+  const cleanRole = role.replace(/::text/g, '');
+  // Luego, convertimos 'superManager' a 'Super Manager'
+  const spaced = cleanRole.replace(/([A-Z])/g, ' $1');
+  // Finalmente, capitalizamos la primera letra
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+// --- FIN DE LA CORRECCIÓN ---
 
 export function Header({ userProfile }: { userProfile: UserProfile | null }) {
   return (
@@ -14,10 +26,16 @@ export function Header({ userProfile }: { userProfile: UserProfile | null }) {
         <div className="flex items-center gap-4">
           {userProfile ? (
             <>
-              <span className="text-sm text-slate-600 hidden md:inline">
-                Hola, {userProfile.full_name || userProfile.email}
-              </span>
-              <form action={logoutAction}>
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-semibold text-slate-800">
+                  {userProfile.full_name || userProfile.email}
+                </p>
+                <p className="text-xs font-semibold text-blue-600 tracking-wide uppercase">
+                  {/* La función de formato ahora limpiará el texto */}
+                  {formatRole(userProfile.rol)}
+                </p>
+              </div>
+              <form action={signOut}>
                 <button type="submit" className="px-4 py-2 text-sm font-semibold bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200">
                   Cerrar Sesión
                 </button>

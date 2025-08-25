@@ -1,30 +1,31 @@
-// src/app/(app)/tasks/_components/DeleteTaskButton.tsx
-'use client'
+'use client';
+
+import { useTransition } from 'react';
 import { LuTrash2 } from 'react-icons/lu';
-import { deleteTaskAction } from '@/app/(app)/tasks/actions'; // <-- RUTA CORREGIDA
+import { deleteTask } from '@/app/(app)/tasks/actions'; // CORRECCIÓN: Importar deleteTask
 
-export function DeleteTaskButton({ taskId }: { taskId: string }) {
-    const deleteTaskWithId = deleteTaskAction.bind(null, taskId);
-    
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        const confirmed = window.confirm('¿Estás seguro de que quieres eliminar esta tarea? Esta acción no se puede deshacer.');
-        if (!confirmed) {
-            event.preventDefault();
+export default function DeleteTaskButton({ taskId }: { taskId: string }) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleDelete = () => {
+    if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+      startTransition(async () => {
+        const result = await deleteTask(taskId);
+        if (result?.error) {
+          alert(`Error: ${result.error}`); // O usar un toast para una mejor UX
         }
-    };
+      });
+    }
+  };
 
-    // --- INICIO DE LA CORRECCIÓN DEL FORMULARIO ---
-    // El 'action' del formulario debe usar la función que creamos con .bind()
-    return (
-        <form action={deleteTaskWithId} onSubmit={handleSubmit}>
-            <button 
-                type="submit"
-                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                aria-label="Eliminar tarea"
-            >
-                <LuTrash2 className="h-5 w-5" />
-            </button>
-        </form>
-    );
-    // --- FIN DE LA CORRECCIÓN DEL FORMULARIO ---
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={isPending}
+      className="p-2 text-gray-500 hover:text-red-600 rounded-full hover:bg-red-100 disabled:opacity-50 transition-colors"
+      aria-label="Eliminar tarea"
+    >
+      {isPending ? '...' : <LuTrash2 className="h-5 w-5" />}
+    </button>
+  );
 }

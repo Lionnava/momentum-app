@@ -1,53 +1,105 @@
-// src/app/(app)/tasks/[id]/edit/_components/EditTaskForm.tsx
-'use client'
+'use client';
 
-import { useActionState, useFormStatus } from 'react';
-import { updateTaskAction, type UpdateTaskState } from '@/app/(app)/tasks/actions';
-import Link from 'next/link';
-import { useState } from 'react';
+// --- INICIO DE LA CORRECCIÓN ---
+import { useActionState } from 'react';         // useActionState se importa desde 'react'
+import { useFormStatus } from 'react-dom';      // useFormStatus se importa desde 'react-dom'
+// --- FIN DE LA CORRECCIÓN ---
 
-// Tipos limpios
-type Task = {
-    id: string; title: string; assignee_id: string | null; due_date: string | null;
-    status: string; division_id: string | null; progress_percent: number; requires_approval: boolean;
-}
-type Profile = { id: string; full_name: string | null; };
-type Division = { id: string; name: string | null; };
+import { updateTask } from '@/app/(app)/tasks/actions'; 
+import type { FormState } from '@/app/(app)/tasks/actions';
+// Asegúrate de tener tus tipos de Supabase generados en esta ruta o ajústala.
+import type { Tables } from '@/lib/types'; 
+
+// Definimos el tipo de la tarea para pasarlo como prop
+type Task = Tables<'tasks'>;
 
 function SubmitButton() {
-    const { pending } = useFormStatus();
-    return (
-        <button type="submit" disabled={pending} className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-400">
-            {pending ? 'Actualizando...' : 'Guardar Cambios'}
-        </button>
-    );
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 disabled:opacity-50"
+    >
+      {pending ? 'Guardando...' : 'Guardar Cambios'}
+    </button>
+  );
 }
 
-export function EditTaskForm({ task, profiles, divisions }: { task: Task; profiles: Profile[]; divisions: Division[] }) {
-    const initialState: UpdateTaskState = { message: '' };
-    const updateTaskWithId = updateTaskAction.bind(null, task.id);
-    const [state, formAction] = useActionState(updateTaskWithId, initialState);
-    const defaultDueDate = task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '';
-    const [progress, setProgress] = useState(task.progress_percent);
+export default function EditTaskForm({ task }: { task: Task }) {
+  const initialState: FormState = { message: '', success: false };
+  
+  // Usamos .bind para pre-cargar la server action con el ID de la tarea.
+  const updateTaskWithId = updateTask.bind(null, task.id);
+  
+  // useActionState ahora funcionará porque está importado correctamente.
+  const [state, formAction] = useActionState(updateTaskWithId, initialState);
 
-    return (
-        <form action={formAction} className="space-y-6">
-            <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700">Título</label>
-                <input type="text" name="title" id="title" required defaultValue={task.title} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
-            </div>
-             <div>
-                <label htmlFor="progress_percent" className="block text-sm font-medium text-gray-700">
-                    Progreso: <span className="font-bold text-blue-600">{progress}%</span>
-                </label>
-                <input id="progress_percent" name="progress_percent" type="range" min="0" max="100" step="5" defaultValue={progress} onChange={(e) => setProgress(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2" />
-            </div>
-            {/* ... (resto del formulario igual) ... */}
+  return (
+    <form action={formAction} className="space-y-6">
+      <div>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+          Título
+        </label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          defaultValue={task.title ?? ''}
+          required
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        />
+      </div>
 
-            <div className="flex items-center justify-end gap-4 pt-4 mt-4 border-t">
-                 <Link href="/tasks" className="text-sm font-medium text-gray-600 hover:text-gray-800">Cancelar</Link>
-                <SubmitButton />
-            </div>
-        </form>
-    );
+      <div>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          Descripción
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows={4}
+          defaultValue={task.description ?? ''}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        ></textarea>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+            Estado
+          </label>
+          <select
+            id="status"
+            name="status"
+            defaultValue={task.status ?? 'Pendiente'}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          >
+            <option>Pendiente</option>
+            <option>En Progreso</option>
+            <option>Completada</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="due_date" className="block text-sm font-medium text-gray-700">
+            Fecha de Vencimiento
+          </label>
+          <input
+            type="date"
+            id="due_date"
+            name="due_date"
+            defaultValue={task.due_date ?? ''}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+      </div>
+
+      {/* Mostramos el mensaje de error si la acción falla */}
+      {state?.message && !state.success && (
+        <p className="text-sm text-red-500">{state.message}</p>
+      )}
+
+      <SubmitButton />
+    </form>
+  );
 }

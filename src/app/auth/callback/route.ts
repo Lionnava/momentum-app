@@ -1,23 +1,31 @@
-// src/app/auth/callback/route.ts
-import { createClient } from '@/utils/supabase/server'
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse } from 'next/server';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
-export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') ?? '/'
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get('code');
 
   if (code) {
-    const supabase = createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      // Redirige al usuario a la URL 'next' (en nuestro caso, /update-password)
-      // o a la página de inicio si 'next' no está definido.
-      return NextResponse.redirect(`${requestUrl.origin}${next}`)
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { cookies: { get: (name) => cookieStore.get(name)?.value, set: (name, value, options) => cookieStore.set({ name, value, ...options }), remove: (name, options) => cookieStore.set({ name, value: '', ...options }) } }
+    );
+    
+    // El middleware ya debería haber establecido la sesión, pero exchangeCodeForSession es la forma
+    // formal de completar el flujo de autenticación PKCE.
+    const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (!error && session) {
+      if (session.user.aud === 'invited') {
+        return NextResponse.redirect(`${origin}/update-password`);
+      }
+      return NextResponse.redirect(`${origin}/dashboard`);
     }
   }
 
-  // Si hay un error o no hay código, redirigir a una página de error
-  console.error('Error en el callback de autenticación o código no encontrado');
-  return NextResponse.redirect(`${requestUrl.origin}/login?message=Error: No se pudo autenticar al usuario.`)
+  // Si algo falla, redirigir al login
+  return NextResponse.redirect(`${origin}/login?message=Enlace de autenticación inválido.`);
 }

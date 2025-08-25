@@ -3,7 +3,7 @@ export function SimpleFooter() {
   return (
     <footer className="w-full py-4 px-4 sm:px-6 lg:px-8 mt-auto bg-white border-t border-gray-200">
       <div className="container mx-auto text-center text-xs text-gray-400">
-        <p>© {currentYear} Momentum | Desarrollado por Ing. Lionel Nava para la Secretaría de Educación Superior.</p>
+        <p>© {currentYear} Momentum | Desarrollado por Ing. LionellNava21 para la Secretaría de Educación Superior de la Gobernación bolivariana del Estado Zulia. República Bolivariana de Venezuela.</p>
       </div>
     </footer>
   );
