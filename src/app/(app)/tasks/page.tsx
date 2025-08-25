@@ -1,11 +1,11 @@
-// Busca la línea donde defines el componente TaskListItem o similar
-// Y añade tipos explícitos para las props.
-const TaskListItem = ({ task }: { task: Task }) => { // En lugar de (task) a secas
-  // ...
-}
+// src/app/(app)/tasks/page.tsx
 
-// En el JSX, cuando haces el map
-tasks.map(task => (
-  // Si 'task' sigue dando error de 'any', puedes castearlo explícitamente
-  <TaskListItem key={task.id} task={task as Task} />
-))
+export default function TasksPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-3xl font-bold">Mis Tareas</h1>
+      <p className="mt-4">Aquí se mostrará la lista de todas las tareas.</p>
+      {/* Próximamente: Añadir la tabla de tareas aquí */}
+    </div>
+  );
+}
