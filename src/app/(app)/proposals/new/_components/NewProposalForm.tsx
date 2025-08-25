@@ -1,17 +1,17 @@
 'use client';
 
-// --- INICIO DE LA CORRECCIÓN DEFINITIVA PARA REACT 19 ---
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-// --- FIN DE LA CORRECCIÓN ---
-
 import { createProposal, type FormState } from '../actions';
-// --- INICIO DE LA CORRECCIÓN ---
-// 1. Eliminamos la importación de 'Tables' que no existe.
-// 2. En su lugar, importamos la 'interface Division' que SÍ existe en tu archivo de tipos.
-import type { Division } from '@/lib/types';
-// 3. Ya no necesitamos la línea "type Division = Pick<...>" porque ya tenemos el tipo correcto.
-// --- FIN DE LA CORRECCIÓN ---
+
+// --- INICIO DE LA CORRECCIÓN FINAL ---
+// 1. En lugar de importar la 'interface Division' completa, creamos un tipo local
+//    que representa EXACTAMENTE los datos que la página nos va a pasar.
+type FormDivision = {
+  id: string;
+  name: string | null; // Lo definimos como string | null para mayor seguridad.
+};
+// --- FIN DE LA CORRECCIÓN FINAL ---
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -26,8 +26,9 @@ function SubmitButton() {
   );
 }
 
-// La prop 'divisions' ahora usa directamente la 'interface Division' que importamos.
-export default function NewProposalForm({ divisions }: { divisions: Division[] }) {
+// La prop 'divisions' ahora usa nuestro nuevo tipo local 'FormDivision'.
+// Ahora, lo que la página le pase coincidirá perfectamente con lo que el formulario espera.
+export default function NewProposalForm({ divisions }: { divisions: FormDivision[] }) {
   const initialState: FormState = { message: '', success: false };
   const [state, formAction] = useActionState(createProposal, initialState);
 
@@ -53,8 +54,6 @@ export default function NewProposalForm({ divisions }: { divisions: Division[] }
         ></textarea>
       </div>
       <div>
-        {/* CORRECCIÓN SUTIL: El 'name' del select debe coincidir con el que espera tu Server Action.
-            Si tu action espera 'division', el name debe ser 'division'. Lo ajustaré a 'division_id' que es más común. */ }
         <label htmlFor="division_id" className="block text-sm font-medium text-gray-700">División</label>
         <select 
           id="division_id" 
@@ -65,7 +64,6 @@ export default function NewProposalForm({ divisions }: { divisions: Division[] }
         >
           <option value="" disabled>Selecciona una división</option>
           {divisions.map((div) => (
-            // Usamos las propiedades 'id' y 'name' que existen en tu interface Division
             <option key={div.id} value={div.id}>{div.name}</option>
           ))}
         </select>
