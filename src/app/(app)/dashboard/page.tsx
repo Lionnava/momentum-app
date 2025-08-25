@@ -1,4 +1,5 @@
 // ... (importaciones y componentes StatCard, etc. se mantienen)
+import RecentTaskItem from '@/components/dashboard/RecentTaskItem';
 
 // Asegúrate de que el tipo RecentTask esté bien definido
 interface RecentTask {

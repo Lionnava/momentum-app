@@ -1,7 +1,6 @@
 'use client';
 
 import { useOptimistic, useRef, useTransition } from 'react';
-import { LuCheck, LuCircle, LuPlus, LuTrash2 } from 'react-icons/lu';
 // --- CORRECCIÓN DE IMPORTACIONES ---
 import { 
     addMilestone, 
