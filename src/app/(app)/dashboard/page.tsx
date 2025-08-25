@@ -34,7 +34,7 @@ export default async function DashboardPage() {
                             // --- INICIO DE LA CORRECCIÓN ---
                             // Añadimos el tipo explícito 'any' temporalmente para que el build pase,
                             // o mejor, casteamos al tipo correcto.
-                            recentTasks.map((task: RecentTask) => <RecentTaskItem key={task.id} task={task} />)
+                            recentTasks.map((task: RecentTask) => <RecentTasksList key={task.id} task={task} />)
                             // --- FIN DE LA CORRECCIÓN ---
                         ) : (<p className="text-center text-gray-500 py-4">No hay tareas recientes para mostrar.</p>)}
                     </div>
