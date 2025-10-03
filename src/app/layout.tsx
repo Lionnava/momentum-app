@@ -7,6 +7,9 @@ export const metadata = {
   description: 'Gestión de tareas y colaboración para equipos.',
 };
 
+// Forzando un nuevo despliegue en Vercel
+export default function RootLayout({ ...
+
 export default function RootLayout({
   children,
 }: {
