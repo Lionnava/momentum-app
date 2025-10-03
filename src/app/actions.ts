@@ -93,7 +93,7 @@ export async function startChat(participantId: string): Promise<{ roomId: string
     if (participantsError) { await supabase.from('chat_rooms').delete().eq('id', newRoom.id); return { roomId: '', error: 'Error al agregar participantes' }; }
     revalidatePath('/chat');
     return { roomId: newRoom.id };
-  } catch (error: any) { console.error('Unexpected error in startChat:', error); return { roomId: '', error: error.message || 'Error inesperado' }; }
+  } catch (error: unknown) { console.error('Unexpected error in startChat:', error); return { roomId: '', error: error.message || 'Error inesperado' }; }
 }
 
 export async function sendMessage(roomId: string, formData: FormData) {
@@ -138,7 +138,7 @@ export async function inviteUser(prevState: InviteUserFormState, formData: FormD
     if (error) { console.error('Error al invitar usuario:', error.message); return { success: false, message: `Error: ${error.message}` }; }
     revalidatePath('/admin/users');
     return { success: true, message: `Invitación enviada correctamente a ${email}.` };
-  } catch (e: any) { console.error('Error inesperado al invitar:', e); return { success: false, message: 'Ocurrió un error inesperado en el servidor.' }; }
+  } catch (e: unknown) { console.error('Error inesperado al invitar:', e); return { success: false, message: 'Ocurrió un error inesperado en el servidor.' }; }
 }
 
 // =================================================================

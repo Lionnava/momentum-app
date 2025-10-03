@@ -9,14 +9,14 @@ import { usePathname } from 'next/navigation';
 import { LuPlus, LuUser, LuUsers, LuSearch, LuMoveVertical, LuArchive, LuTrash2 } from 'react-icons/lu';
 import { NewChatModal } from './NewChatModal';
 
-const getConversationName = (room: any, currentUserId: string) => {
+const getConversationName = (room: unknown, currentUserId: string) => {
   if (room.room_type === 'group') return room.name || 'Grupo sin nombre';
   const participants = room.participants || [];
-  const otherParticipant = participants.find((p: any) => p.id !== currentUserId);
+  const otherParticipant = participants.find((p: unknown) => p.id !== currentUserId);
   return otherParticipant?.full_name || 'Conversación';
 };
 
-const getConversationAvatar = (room: any, currentUserId: string) => {
+const getConversationAvatar = (room: unknown, currentUserId: string) => {
   if (room.room_type === 'group') {
     return (
       <div className="relative flex-shrink-0">
@@ -29,7 +29,7 @@ const getConversationAvatar = (room: any, currentUserId: string) => {
   }
   
   const participants = room.participants || [];
-  const otherParticipant = participants.find((p: any) => p.id !== currentUserId);
+  const otherParticipant = participants.find((p: unknown) => p.id !== currentUserId);
   
   if (otherParticipant?.avatar_url) {
     return (
@@ -54,7 +54,7 @@ const getConversationAvatar = (room: any, currentUserId: string) => {
   );
 };
 
-const getLastMessagePreview = (room: any) => {
+const getLastMessagePreview = (room: unknown) => {
   if (!room.last_message) return 'No hay mensajes aún';
   
   const prefix = room.last_message.sender ? `${room.last_message.sender.full_name}: ` : '';
