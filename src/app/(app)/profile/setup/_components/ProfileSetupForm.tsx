@@ -2,7 +2,6 @@
 'use client';
 
 import { useFormStatus } from 'react-dom';
-import { updateProfile } from '@/app/actions';
 import type { User } from '@supabase/supabase-js';
 
 function SubmitButton() {
@@ -12,7 +11,6 @@ function SubmitButton() {
 
 export function ProfileSetupForm({ user }: { user: User }) {
   return (
-    <form action={updateProfile} className="space-y-6">
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-slate-700">Correo Electrónico</label>
         <input id="email" type="email" value={user.email} disabled className="mt-1 block w-full rounded-md border-slate-300 bg-slate-100 shadow-sm px-3 py-2 cursor-not-allowed" />

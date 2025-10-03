@@ -139,7 +139,7 @@ export function ConversationList({ initialRooms, allUsers, currentUserId }: Conv
                 <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3">
                   <LuSearch className="text-slate-400" size={24} />
                 </div>
-                <p className="text-sm text-slate-500">No se encontraron conversaciones para "{searchTerm}"</p>
+			<p className='{text-sm text-slate-500}'>No se encontraron conversaciones para "{searchTerm}"</p>
                 <button 
                   onClick={() => setSearchTerm('')}
                   className="mt-2 text-sm text-blue-600 hover:text-blue-800"
