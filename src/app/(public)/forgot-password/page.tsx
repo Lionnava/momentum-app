@@ -4,7 +4,6 @@
 import { useActionState } from 'react'; // <-- Corregido: Importar desde 'react'
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
-import { requestPasswordResetAction, type ForgotPasswordState } from './actions';
 
 function SubmitButton() {
   const { pending } = useFormStatus();

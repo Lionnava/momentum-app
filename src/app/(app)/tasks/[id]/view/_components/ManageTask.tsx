@@ -3,7 +3,6 @@
 
 import { useOptimistic, useRef, useTransition } from 'react';
 import { LuCheck, LuCircle, LuPlus, LuTrash2 } from 'react-icons/lu';
-import { addMilestoneAction, toggleMilestoneAction, deleteMilestoneAction, updateTaskProgressAction } from '@/app/(app)/tasks/actions';
 import { useRouter } from 'next/navigation';
 
 type Milestone = { id: string; description: string; is_completed: boolean; task_id: string; created_at: string };

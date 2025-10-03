@@ -3,7 +3,6 @@
 
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { updatePasswordAction, type UpdatePasswordState } from './actions';
 import Link from 'next/link';
 
 function SubmitButton() {
