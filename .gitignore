@@ -1,0 +1,18 @@
+# dependencias
+/node_modules
+
+# compilación de Next.js
+/.next/
+/out/
+
+# archivos de entorno (secretos)
+.env*.local
+.env
+
+# otros
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+*.tsbuildinfo
